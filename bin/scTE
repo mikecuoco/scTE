@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from posixpath import basename
 import pandas as pd
 import multiprocessing
 from functools import partial
@@ -75,17 +76,23 @@ def main():
     timestart=datetime.datetime.now()
     args=read_opts(prepare_parser())
 
+    info = args.info
+    error = args.error
+    warn = args.warn
+
+    assert sys.version_info >= (3, 6), 'Python >=3.6 is required'
+
+    # Check for duplicate names in input files
+    seen = set()
+    dupes = [f for f in args.input if basename(f) in seen or seen.add(basename(f))]   
+    assert len(dupes) == 0, "Duplicate BAM file basenames: %s" % " ".join(dupes)
+    info("BAM file basenames are unique")
+    
     # Fix up the booleans:
     if args.UMI == 'False': args.UMI = False
     if args.CB == 'False': args.CB = False
     if args.hdf5 == 'True': args.hdf5 = True
     else: args.hdf5 = False
-
-    info = args.info
-    error = args.error
-
-    assert sys.version_info >= (3, 6), 'Python >=3.6 is required'
-
     info(args.argtxt + "\n")
 
     outname = args.out.split('/')[-1:][0]
